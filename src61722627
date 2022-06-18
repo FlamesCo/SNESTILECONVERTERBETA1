@@ -1,0 +1,154 @@
+import os, sys
+import tkinter as tk
+import tkinter.messagebox
+from tkinter import filedialog
+from PIL import Image, ImageDraw, ImageTk
+from math import sqrt
+## make a fail safe if the png fails
+
+
+def load_png(file):
+    png = Image.open(file)
+    png.load()
+    return png
+
+
+def main():
+    if len(sys.argv) == 1:
+        print("Usage: SNESCONVERTER1.0XX.py <filename>")
+    else:
+        png = load_png(sys.argv[1])
+        width, height = png.size
+        gui_main(png, width, height)
+    ## if the file does not exist show a message box with a red x saying
+    # 404 FILE NOT FOUND and exit
+    ## if the file is not a png show a message box with a red x saying
+## make a gui that scans your pictures folder for pngs or sprite sheets
+def gui_main2(png, width, height):
+    def save():
+        file = filedialog.asksaveasfilename(initialdir = "/", title = "Select file", filetypes = [("SNES", "*.ppm")])
+        save_chr(file, png)
+    def inpaint():
+## make a messagebox say if the png is not found and make a errorif __name__ == "__main__":
+          if len(sys.argv) == 1:
+           print("Usage: SNESCONVERTER1.0XX.py <filename>")
+ 
+def save_chr(file, chr):
+    chr.save(file)
+
+
+def png2snes(png, width, height):
+    assert png.mode == "RGB"
+    assert png.size == (width, height)
+
+    for x in range(0, width):
+        draw.point((x, y), ((png.getpixel((x, y))[0]) >> 3))
+    img = Image.new("RGB", (width, height), "white")
+    draw = ImageDraw.Draw(img)
+    for y in range(0, height):
+        for x in range(0, width):
+            draw.point((x, y), ((png.getpixel((x, y))[0]) >> 3))
+
+
+def inpaint(png, width, height, radius):
+    for y in range(0, height):
+        for x in range(0, width):
+            if png.getpixel((x, y)) == (255, 255, 255):
+                count = 0
+                for y2 in range(max(0, y - radius), min(y + radius, height)):
+                    for x2 in range(max(0, x - radius), min(x + radius, width)):
+                        if sqrt((x - x2) * (x - x2) + (y - y2) * (y - y2)) < radius:
+                            count += 1
+                            png.putpixel((x, y), png.getpixel((x2, y2)))
+class Application(tk.Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
+ 
+    def create_widgets(self):
+        self.label_image = tk.Label(self)
+        self.label_image.pack(side = "top")
+        self.label_image2 = tk.Label(self)
+        self.label_image2.pack(side = "top")
+
+        self.save_button = tk.Button(self)
+        self.save_button["text"] = "Save"
+        self.save_button["command"] = self.save
+        self.save_button.pack(side = "top")
+
+        self.inpaint_button = tk.Button(self)
+        self.inpaint_button["text"] = "Inpaint"
+        self.inpaint_button["command"] = self.inpaint
+        self.inpaint_button.pack(side = "top")
+
+
+    def inpaint(self):
+        inpaint(self.png, self.width, self.height, 5)
+        self.update_image()
+
+    def save(self):
+        file = filedialog.asksaveasfilename(initialdir = "/", title = "Select file", filetypes = [("SNES", "*.chr")])
+        if file == "":
+            return
+        save_chr(file, self.png)
+        tkinter.messagebox.showinfo("Save", "File saved")
+
+
+    def update_image(self):
+        photo = ImageTk.PhotoImage(self.png2snes)
+        self.label_image.configure(image = photo)
+        self.label_image.image = photo
+        photo2 = ImageTk.PhotoImage(self.png)
+        self.label_image2.configure(image = photo2)
+        self.label_image2.image = photo2
+
+
+def gui_main(png, width, height):
+    def save():
+        file = filedialog.asksaveasfilename(initialdir = "/", title = "Select file", filetypes = [("SNES", "*.ppm")])
+        save_chr(file, png)
+
+    def inpaint():
+## make a gui loop
+        ## update the art engine to realtime render the graphics
+        def update_image():
+            photo = ImageTk.PhotoImage(png2snes(png, width, height))
+            label_image.configure(image = photo)
+            label_image.image = photo
+            photo2 = ImageTk.PhotoImage(png)
+            
+            root.after(100, update_image)
+        update_image()
+
+    def update_image():
+        photo = ImageTk.PhotoImage(png2snes(png, width, height))
+        label_image.configure(image = photo)
+        label_image.image = photo
+
+    root = tk.Tk()
+    label_image = tk.Label(root)
+    label_image.pack()
+
+    tk.Button(root, text = "Save", command = save).pack()
+    tk.Button(root, text = "Inpaint", command = inpaint).pack()
+## make this code compatible with wine steam deck windows xp 
+    update_image()
+
+    root.mainloop()
+
+
+
+    
+
+if __name__ == "__main__":
+    file = filedialog.askopenfilename(initialdir = "/", title = "Select file", filetypes = [("PNG", "*.png")])
+    png = load_png(file)
+    width = png.width
+    height = png.height
+
+    app = Application(master = tk.Tk())
+    app.png = png
+    app.width = width
+    app.height = height
+    app.png2snes = png2snes(png, width, height)
+    app.update_image()
+    app.mainloop()
